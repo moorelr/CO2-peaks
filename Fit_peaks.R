@@ -18,7 +18,10 @@
 #   the working directory as a .csv file
 
 # set working directory ####
+dir_save <- getwd()
+dir_data <- paste(getwd(), "data", sep = "/")
 
+setwd(dir_data); list.files()
 i <- 1      # Start on the first spectrum
 n <- sum(grepl(".txt", list.files()))    # how many spectra
 
@@ -32,9 +35,14 @@ peak <- function(x, center, imax, beta.sq){
 
 line <- function(x, m, b){(m*x)+b}
 
-single_peak <- function(peak_name, window, wiggling = FALSE){
+single_peak <- function(peak_name, window, wiggling = FALSE, peak_zoom = FALSE){
   
-  plot(spectrum$V1, spectrum$V2, cex = 0, main = spectrum_name)
+  plot_window <- NULL
+  if(peak_zoom){
+    plot_window <- window
+  }
+  
+  plot(spectrum$V1, spectrum$V2, cex = 0, main = spectrum_name, xlim = plot_window)
   lines(spectrum$V1, spectrum$V2)
   
   abline(v = window, col = "green", lty = 2)
@@ -141,8 +149,7 @@ plot(spectrum$V1, spectrum$V2, cex = 0, main = spectrum_name)
 lines(spectrum$V1, spectrum$V2)
 
 peak_fit <- NA
-print("Displaying spectrum", i, "of", n)
-
+print(paste("Displaying spectrum", i, "of", n))
 }
 
 if(text_input == 1){
@@ -250,4 +257,56 @@ if(text_input == 9){
 # export outputs ####
 
 #list.files()
-write.csv(output, file = paste("fit peaks ", Sys.time(), ".csv", sep = ""), row.names = FALSE)
+time_stamp <- gsub(Sys.time(), pattern = ":", replacement = "_")
+write.csv(output, file = paste(dir_save, "/fit peaks ", time_stamp, ".csv", sep = ""), row.names = FALSE)
+
+# Example spectra ####
+if(FALSE){
+  pdf(file = paste(dir_save, "Example xl 2 mi 2.pdf", sep = "/")
+      , width = 9, height = 4)
+  
+  par(mfrow = c(1, 3))
+  setwd(dir_data); list.files()
+  i <- 8      # Start on the first spectrum
+  n <- sum(grepl(".txt", list.files()))    # how many spectra
+  spectrum_name <- list.files()[i]
+  spectrum <- read.delim(spectrum_name, header=FALSE)
+  peak_fit <- NA
+  print(paste("Displaying spectrum", i, "of", n))
+  
+  # Panel 1: the whole spectrum
+  plot(spectrum$V1, spectrum$V2, type = "l")
+  
+  # Panel 2: zoom on 1285 peak as points
+  plot(spectrum$V1, spectrum$V2, xlim = c(1270, 1300))
+  
+  # Panel 3: fit of 1285 peak
+  for(try in 1:100){
+    print(paste("try", as.character(try), sep = " = "))
+    try(peak_fit <- single_peak("CO2_1285", c(1270, 1300), wiggling = TRUE, peak_zoom = TRUE)
+        , silent = TRUE
+    )
+    if(is.data.frame(peak_fit)){
+      output <- rbind.data.frame(output, peak_fit)
+      print(peak_fit)
+      peak_fit <- NA
+      break
+    }
+  }
+  dev.off()
+}
+if(FALSE){
+  pdf(file = paste(dir_save, "Example peak.pdf", sep = "/")
+      , width = 5, height = 4)
+  xs <- seq(1, 100, length.out = 100)
+  m.i <- 0.1
+  b.i <- 10
+  center.a.i <- 60
+  imax.a.i <- 50
+  beta.sq.a.i <- 100
+  ys <- line(xs, m.i, b.i) + peak(xs, center.a.i, imax.a.i, beta.sq.a.i)
+  plot(xs, ys, type = "l"
+       , xlab = "x", ylab = "f(x)")
+  points(xs, ys, pch = 19, cex = 0.8, col = rgb(0, 0, 0, 0.3))
+  dev.off()
+}
