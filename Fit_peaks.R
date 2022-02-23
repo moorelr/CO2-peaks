@@ -2,7 +2,7 @@
 # Copyright 2020 Lowell R. Moore
 
 # NOTE: This script should work as long as the spectra
-#   are .txt files in the current working directory.
+#   are .txt files in the "../data" directory.
 
 # Note: This script works as a "while" loop which updates a
 #   GUI using the "menu" function in base R.
